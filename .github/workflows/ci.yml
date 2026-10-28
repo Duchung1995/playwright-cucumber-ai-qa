@@ -1,0 +1,42 @@
+name: e2e
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'Cucumber profile (default | api | ui | smoke)'
+        default: default
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      HEADLESS: 'true'
+      PARALLEL: '2'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: cp .env.example .env
+      - run: npm run typecheck
+      - run: npm run lint
+      - name: Run tests
+        run: npx cucumber-js --profile ${{ github.event.inputs.profile || 'default' }}
+      - name: Summarise
+        if: always()
+        run: |
+          { echo '### Failed scenarios'; echo '```json'; npm run -s report:parse -- --failures-only; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reports
+          path: reports/
+          retention-days: 14

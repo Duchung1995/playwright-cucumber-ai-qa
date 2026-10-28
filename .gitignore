@@ -1,0 +1,11 @@
+node_modules/
+reports/
+test-results/
+.env
+.DS_Store
+# Personal Claude Code settings stay local; the shared harness in .claude/ is committed
+.claude/settings.local.json
+.claude/.headroom*
+
+# Assignment brief (not part of the deliverable)
+*.pdf

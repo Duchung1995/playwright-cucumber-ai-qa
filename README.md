@@ -1,5 +1,7 @@
 # Toolshop QA: Playwright + TypeScript + Cucumber BDD, with an agentic QA harness
 
+[![e2e](https://github.com/Duchung1995/playwright-cucumber-ai-qa/actions/workflows/ci.yml/badge.svg)](https://github.com/Duchung1995/playwright-cucumber-ai-qa/actions/workflows/ci.yml)
+
 This POC is an end-to-end and integration test framework for a public demo shop. The AI layer is a **Claude Code harness**: an orchestrator, role agents, skills, hooks, rules and rubrics, all checked into `.claude/`.
 
 ## 1. Application under test
@@ -115,33 +117,21 @@ Key design choices:
 
 ## 5. AI integration: agentic QA workflow as a Claude Code harness
 
-The AI layer is not a runtime library. It's a **Claude Code harness in `.claude/`**, used only for this repository: anyone who clones the repo and opens it in Claude Code gets the workflows, and invokes them when needed. Full design, diagram and examples: **[docs/ai-harness.md](docs/ai-harness.md)**.
+The AI layer is a **Claude Code harness in `.claude/`**, not a runtime library. Anyone who opens the repo in Claude Code gets the workflows, and invokes them when needed.
 
-| Concept | Implementation |
-|---|---|
-| **Orchestrator** | `/qa <goal>` (`.claude/commands/qa.md`) plans, delegates to role agents, enforces rubric gates and escalates. Focused pipelines: `/qa-run`, `/qa-triage`, `/qa-heal`, `/qa-generate`, `/qa-coverage`, `/qa-report`. |
-| **Agent roles** (`.claude/agents/`) | `failure-triage` (read-only diagnosis), `test-healer` (policy-bound fixes), `scenario-generator` (story → Gherkin + steps + POM), `coverage-reviewer` (REQ ↔ test gaps), `run-reporter` (Markdown summary), `qa-judge` (independent rubric evaluator) |
-| **Skills / tools** (`.claude/skills/`) | `run-tests`, `parse-cucumber-report`*, `inspect-trace`*, `explore-page`*, `write-gherkin`*, `create-page-object`, `api-schema-check`* (* = includes an executable TypeScript script) |
-| **Guardrails** (`.claude/hooks/`) | block sleeps/CSS/XPath before they're written; protect `.env`/lockfile/reports/rubrics; type-check and dry-run Gherkin after each edit; inject the last-run status at session start |
-| **Rules** (`.claude/rules/`) | path-scoped conventions: locators, page objects, Gherkin, API tests, healing policy |
-| **Rubric evaluation** (`.claude/rubrics/`) | scored gates for scenario quality, triage classification and healing fixes. Generators never grade themselves. |
+- **Orchestrator:** `/qa <goal>`, plus focused pipelines `/qa-run`, `/qa-triage`, `/qa-heal`, `/qa-generate`, `/qa-coverage` and `/qa-report`.
+- **Agent roles:** failure-triage, test-healer, scenario-generator, coverage-reviewer, run-reporter, and qa-judge (an independent evaluator).
+- **Skills:** run-tests, parse-cucumber-report, inspect-trace, explore-page, write-gherkin, create-page-object, api-schema-check. Most include runnable TypeScript scripts.
+- **Guardrails:** hooks that block sleeps and CSS/XPath, protect secrets and rubrics, and type-check or dry-run every edit. Path-scoped rules and scored rubrics complete the set.
 
-To try it:
 ```bash
-claude                      # in the repo root
+claude
 > /qa-run ui                # run → parse → triage failures → write reports/qa-summary.md
-> /qa-coverage              # find gaps (REQ-API-04, REQ-UI-04, REQ-UI-05 are open)
-> /qa-generate REQ-API-04   # generate + judge new scenarios
+> /qa-coverage              # requirement ↔ test gaps
+> /qa-generate REQ-UI-04    # generate scenarios, gated by the qa-judge rubric
 ```
 
-The skill scripts also work without Claude:
-```bash
-npm run -s report:parse -- --failures-only
-npm run -s steps:list -- brand
-npx tsx .claude/skills/inspect-trace/scripts/trace-summary.ts reports/traces/<file>.zip
-npx tsx .claude/skills/explore-page/scripts/page-snapshot.ts /auth/register
-npx tsx .claude/skills/api-schema-check/scripts/schema-drift.ts
-```
+Design, diagram, real run transcripts and the bugs the harness found: **[docs/ai-harness.md](docs/ai-harness.md)**.
 
 ## 6. Notes and limitations
 - The target is a **shared public instance**. Other users change data concurrently, and it can be slow or briefly unavailable. Tests create their own data and clean it up. Catalog assertions compare the UI with the live API rather than with hard-coded product lists, so they stay valid when the catalog changes.

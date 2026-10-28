@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Toolshop QA Status</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --surface: #ffffff; --text: #1d1d1b; --muted: #5f5f5a; --border: #e2e1dc;
+    --ok: #1f7a46; --ok-bg: #e6f4ec; --warn: #9a5b00; --warn-bg: #fdf1dc;
+    --bad: #b42318; --bad-bg: #fde8e6; --info: #2457a6; --info-bg: #e7eefa; --code-bg: #f0efea;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #161615; --surface: #1f1f1d; --text: #ecebe6; --muted: #a3a29b; --border: #33322f;
+      --ok: #5cc98a; --ok-bg: #16301f; --warn: #e8b05a; --warn-bg: #33270f;
+      --bad: #f07a6e; --bad-bg: #3a1a17; --info: #82aaf0; --info-bg: #19243a; --code-bg: #2a2a27;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #161615; --surface: #1f1f1d; --text: #ecebe6; --muted: #a3a29b; --border: #33322f;
+    --ok: #5cc98a; --ok-bg: #16301f; --warn: #e8b05a; --warn-bg: #33270f;
+    --bad: #f07a6e; --bad-bg: #3a1a17; --info: #82aaf0; --info-bg: #19243a; --code-bg: #2a2a27;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1000px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 26px; margin: 0 0 4px; }
+  h2 { font-size: 20px; margin: 40px 0 12px; display: flex; align-items: center; gap: 10px; }
+  h3 { font-size: 16px; margin: 24px 0 8px; }
+  p.sub { color: var(--muted); margin: 0 0 24px; }
+  code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; font-size: 13px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .stat .v { font-size: 26px; font-weight: 650; }
+  .stat .l { color: var(--muted); font-size: 13px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 4px 18px; }
+  .tablewrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .03em; }
+  tr:last-child td { border-bottom: 0; }
+  ul { padding-left: 20px; } li { margin: 4px 0; }
+  .pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+  .ok { color: var(--ok); background: var(--ok-bg); }
+  .warn { color: var(--warn); background: var(--warn-bg); }
+  .bad { color: var(--bad); background: var(--bad-bg); }
+  .info { color: var(--info); background: var(--info-bg); }
+  .note { border-left: 3px solid var(--info); background: var(--info-bg); padding: 10px 14px; border-radius: 6px; margin: 12px 0; }
+  .muted { color: var(--muted); }
+  footer { margin-top: 48px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Toolshop QA framework: project status</h1>
+  <p class="sub">Playwright + TypeScript + Cucumber BDD POC with a Claude Code agentic QA harness. Status as of 2026-10-28, local commit <code>c4b7d48</code>.</p>
+
+  <div class="stats">
+    <div class="stat"><div class="v">20 / 20</div><div class="l">scenarios passing (last full run)</div></div>
+    <div class="stat"><div class="v">12 + 8</div><div class="l">API + UI scenarios</div></div>
+    <div class="stat"><div class="v">179</div><div class="l">steps executed</div></div>
+    <div class="stat"><div class="v">~70 s</div><div class="l">full suite, serial, headless</div></div>
+    <div class="stat"><div class="v">0</div><div class="l">open test failures</div></div>
+  </div>
+
+  <!-- ============================ 1 ============================ -->
+  <h2><span class="pill ok">Done</span> 1. What has been accomplished</h2>
+
+  <h3>1.1 Target application</h3>
+  <div class="card"><ul>
+    <li><b>Toolshop</b> (Practice Software Testing): UI <code>https://practicesoftwaretesting.com</code>, API <code>https://api.practicesoftwaretesting.com</code>. Both are documented in the README.</li>
+    <li>Before writing any code, the endpoints, permissions, error bodies and <code>data-test</code> ids were checked against the live app and its OpenAPI spec.</li>
+  </ul></div>
+
+  <h3>1.2 Required test cases (all passing)</h3>
+  <div class="tablewrap"><table>
+    <tr><th>Assignment case</th><th>Feature file</th><th>Scenarios</th><th>Key assertions</th><th>Status</th></tr>
+    <tr><td>API-1 Authentication</td><td><code>features/api/auth.feature</code></td><td>6</td><td>200 + JWT schema, the token works on <code>/users/me</code>; 401 + error body for a wrong password, unknown user or empty body; 401 for a missing or forged token</td><td><span class="pill ok">Pass</span></td></tr>
+    <tr><td>API-2 Create &amp; retrieve</td><td><code>features/api/brand-create-retrieve.feature</code></td><td>3</td><td>POST 201 + schema + echo; GET 200 strict schema + equality; content-type, cache-control and CORS headers; 409 for a duplicate, 422 for validation</td><td><span class="pill ok">Pass</span></td></tr>
+    <tr><td>API-3 Update / delete lifecycle</td><td><code>features/api/brand-update-delete.feature</code></td><td>3</td><td>PUT 200 and the change is visible; DELETE 204; then GET, DELETE and PUT return 404; anonymous delete 401, customer delete 403</td><td><span class="pill ok">Pass</span></td></tr>
+    <tr><td>UI-1 Happy path</td><td><code>features/ui/checkout.feature</code></td><td>1</td><td>customer seeded via API → login → search → product → qty 2 → cart badge and total → prefilled billing address → Cash on Delivery → payment success → invoice number</td><td><span class="pill ok">Pass</span></td></tr>
+    <tr><td>UI-2 Validation &amp; edge</td><td><code>features/ui/form-validation.feature</code></td><td>5</td><td>all required-field errors; field highlight (<code>aria-invalid</code> + <code>.is-invalid</code>); invalid email, short password, non-numeric phone; login error banner</td><td><span class="pill ok">Pass</span></td></tr>
+    <tr><td>UI-3 UI vs backend sync</td><td><code>features/ui/catalog-sync.feature</code></td><td>2</td><td>category filter + price sort equals the API (names, prices, count, order); ascending prices; page 2 equals API <code>page=2</code></td><td><span class="pill ok">Pass</span></td></tr>
+  </table></div>
+
+  <h3>1.3 Framework architecture</h3>
+  <div class="card"><ul>
+    <li><b>Custom World</b> (<code>src/support/world.ts</code>) holds the page, a lazy page-object registry, typed API clients, scenario state, and lists of created entities to clean up.</li>
+    <li><b>Hooks</b> (<code>src/support/hooks.ts</code>):
+      <ul>
+        <li>The browser launches lazily, so API runs never start one, and each scenario gets its own context.</li>
+        <li>Tracing is always recorded. On failure the trace is kept and a full-page screenshot is attached.</li>
+        <li>An After hook deletes created brands and users, even when the scenario failed.</li>
+      </ul></li>
+    <li><b>POM</b> (<code>src/pages/</code>): <code>readonly Locator</code> fields, intent-level methods, a shared <code>Header</code> component.</li>
+    <li><b>Deterministic locators</b>: <code>getByRole</code> → <code>getByLabel</code> → <code>getByTestId</code> (<code>data-test</code>). No CSS or XPath.</li>
+    <li><b>Zero sleeps</b>: web-first assertions plus <code>waitForResponse</code>. ESLint bans <code>waitForTimeout</code>, <code>setTimeout</code> and ElementHandles.</li>
+    <li><b>Typed API clients</b> (<code>src/api/</code>) and <b>zod schemas</b> (<code>src/schemas/</code>).</li>
+    <li><b>Test data</b>: unique slugs and emails, and checkout seeds an isolated customer.</li>
+    <li><b>Cucumber profiles</b>: <code>default</code>, <code>api</code>, <code>ui</code>, <code>smoke</code>, <code>dryrun</code>. Reports go to JSON, HTML and a rerun file.</li>
+    <li><b>CI workflow</b> (<code>.github/workflows/ci.yml</code>): type-check, lint, tests, report artifact, job summary.</li>
+    <li><b>Docs</b>: <code>README.md</code>, <code>CLAUDE.md</code>, <code>docs/requirements.md</code> (REQ IDs ↔ <code>@REQ-*</code> tags), <code>docs/ai-harness.md</code> (with a mermaid diagram).</li>
+  </ul></div>
+
+  <h3>1.4 AI layer: Claude Code harness in <code>.claude/</code></h3>
+  <div class="tablewrap"><table>
+    <tr><th>Component</th><th>Contents</th><th>Verified</th></tr>
+    <tr><td>Orchestrator (commands)</td><td><code>/qa</code>, <code>/qa-run</code>, <code>/qa-triage</code>, <code>/qa-heal</code>, <code>/qa-generate</code>, <code>/qa-coverage</code>, <code>/qa-report</code></td><td><span class="pill warn">Discovered by Claude Code, not run</span></td></tr>
+    <tr><td>Agent roles</td><td>failure-triage, test-healer, scenario-generator, coverage-reviewer, run-reporter, qa-judge</td><td><span class="pill warn">Discovered by Claude Code, not run</span></td></tr>
+    <tr><td>Skills</td><td>run-tests, parse-cucumber-report, inspect-trace, explore-page, write-gherkin, create-page-object, api-schema-check</td><td><span class="pill ok">All 5 scripts run successfully</span></td></tr>
+    <tr><td>Hooks</td><td>guard-test-code (no sleeps, CSS or XPath), protect-files, post-edit-check (tsc + Gherkin dry run), session-context</td><td><span class="pill ok">Tested with sample input; fired live in session</span></td></tr>
+    <tr><td>Rules</td><td>locators, page-objects, gherkin, api-tests, healing-policy (path-scoped)</td><td><span class="pill ok">Loaded automatically in session</span></td></tr>
+    <tr><td>Rubrics</td><td>scenario-quality, triage-classification, healing-fix, plus the scoring contract</td><td><span class="pill warn">Written, not exercised by qa-judge</span></td></tr>
+  </table></div>
+
+  <h3>1.5 Real issues found and fixed during development</h3>
+  <div class="tablewrap"><table>
+    <tr><th>Issue</th><th>Root cause (from trace evidence)</th><th>Fix</th></tr>
+    <tr><td>Order confirmation not found</td><td>The element has <code>id="order-confirmation"</code>, not a <code>data-test</code></td><td><code>getByText(/Thanks for your order/)</code></td></tr>
+    <tr><td>Country select timeout</td><td>The option label is "Netherlands (the)"</td><td>Use the exact ISO label</td></tr>
+    <tr><td>Checkout flake #1: <code>POST /invoices → 422</code></td><td>The shared demo customer's profile prefill overwrote the typed address (Austria, null postcode)</td><td>Seed an isolated customer via <code>POST /users/register</code></td></tr>
+    <tr><td>Checkout flake #2: <code>POST /invoices → 422</code></td><td>The backend validates the city against <code>/postcode-lookup</code>. Earlier passes only happened when a race let the lookup overwrite the city.</td><td>Seed the address that the lookup returns, then assert the full prefilled address exactly</td></tr>
+    <tr><td>Hook missed undefined steps</td><td>A Cucumber dry run exits 0 even when steps are undefined</td><td>The hook now checks the summary text as well</td></tr>
+  </table></div>
+  <p class="muted">Stability evidence: after the final fix, checkout passed 6/6 isolated runs, and the full suite passed 20/20 serially and 20/20 with <code>PARALLEL=3</code>. Type-check and lint are clean.</p>
+
+  <!-- ============================ 2 ============================ -->
+  <h2><span class="pill bad">Failing</span> 2. What is failing and has not been fixed</h2>
+  <div class="note"><b>No test is currently failing.</b> The last full runs were 20/20 green. The items below are known problems that are still open: risks to the suite, and product behaviour observed but not acted on.</div>
+  <div class="tablewrap"><table>
+    <tr><th>Item</th><th>Type</th><th>Details</th><th>Impact</th></tr>
+    <tr><td>Dependence on the shared public instance</td><td><span class="pill warn">Environment risk</span></td><td>Other users can change catalog data, rename the demo accounts' profiles or slow the server. The tests seed their own data where possible, but brand, product, category and checkout flows still rely on the live site being up and its seed catalog (e.g. "Combination Pliers", the "Pliers" category) existing.</td><td>Intermittent red runs that aren't caused by our code</td></tr>
+    <tr><td>Postcode lookup assumed deterministic</td><td><span class="pill warn">Test risk</span></td><td>The checkout seed relies on <code>/postcode-lookup</code> returning the same address that invoice validation expects. That held in every observed run, but nothing guarantees it.</td><td>Checkout 422 if the service behaviour changes</td></tr>
+    <tr><td>App console errors</td><td><span class="pill bad">Product issue (not reported)</span></td><td>Traces show repeated <code>TypeError: Cannot read properties of null (reading 'cart_items')</code> in the storefront. Nothing asserts on it and no bug report has been filed.</td><td>None on tests; a possible real defect</td></tr>
+    <tr><td>Password validation message</td><td><span class="pill bad">Product issue (not reported)</span></td><td>An 8-character lowercase password (<code>abcdefgh</code>) gets "Password can not include invalid characters", which looks like the wrong message for a weak password.</td><td>Not tested; the outline uses the short-password case</td></tr>
+    <tr><td>Under-18 date of birth</td><td><span class="pill info">Not validated client-side</span></td><td>Entering 2015-01-01 shows no client-side error, so the boundary check was dropped from the UI validation outline.</td><td>Gap in validation coverage</td></tr>
+    <tr><td>Hook timing</td><td><span class="pill info">Minor</span></td><td>The post-edit hook runs <code>tsc</code> on every edit. During multi-file changes it reports errors from edits that are still midway, which are expected and clear up once the change is complete.</td><td>Noise only</td></tr>
+  </table></div>
+
+  <!-- ============================ 3 ============================ -->
+  <h2><span class="pill warn">To do</span> 3. What remains unfinished</h2>
+  <div class="tablewrap"><table>
+    <tr><th>#</th><th>Item</th><th>Why it matters</th><th>Next step</th></tr>
+    <tr><td>1</td><td><b>Not pushed to a public GitHub repo</b></td><td>The deliverable is a public repository</td><td>Choose a repo name, then <code>gh repo create &lt;name&gt; --public --source . --push</code></td></tr>
+    <tr><td>2</td><td><b>CI has never run on GitHub Actions</b></td><td>The workflow has only been reviewed, not executed</td><td>Push, then check the first run and the uploaded <code>reports/</code> artifact</td></tr>
+    <tr><td>3</td><td><b>Agent workflows not run end to end</b></td><td><code>/qa-run</code>, <code>/qa-triage</code>, <code>/qa-heal</code>, <code>/qa-generate</code>, <code>/qa-coverage</code> and the qa-judge rubric loop have not been run. The example sessions in <code>docs/ai-harness.md</code> are illustrative.</td><td>Run <code>/qa-coverage</code>, then <code>/qa-generate REQ-API-04</code>. Break a locator and run <code>/qa-run ui</code> → <code>/qa-heal</code>. Record real transcripts.</td></tr>
+    <tr><td>4</td><td><code>reports/qa-summary.md</code> never generated</td><td>This is the run-reporter agent's output</td><td>Run <code>/qa-report</code></td></tr>
+    <tr><td>5</td><td>Agent <code>skills:</code> frontmatter not verified</td><td>If Claude Code ignores it, agents won't preload their skills, though they can still read them</td><td>Confirm while running item 3</td></tr>
+    <tr><td>6</td><td>Backlog requirements uncovered (intentional)</td><td>REQ-API-04 product search, REQ-UI-04 favorites and REQ-UI-05 contact form are left for the generator demo</td><td>Fill them via <code>/qa-generate</code></td></tr>
+    <tr><td>7</td><td>Cross-browser runs</td><td>Only Chromium is installed and tested; <code>BROWSER=firefox|webkit</code> is untested</td><td><code>npx playwright install firefox webkit</code>, then run <code>npm run test:ui</code></td></tr>
+    <tr><td>8</td><td><code>npm run test:smoke</code> and <code>RETRY</code> not run on their own</td><td>The profiles exist, but only default, api and ui have been run</td><td>Run them once</td></tr>
+    <tr><td>9</td><td>No PATCH coverage</td><td>The lifecycle uses PUT. PATCH was checked manually (200), but no scenario covers it.</td><td>Optional extra scenario</td></tr>
+    <tr><td>10</td><td>Richer HTML report</td><td><code>multiple-cucumber-html-reporter</code> was dropped from the plan; only the built-in Cucumber HTML report exists</td><td>Optional</td></tr>
+    <tr><td>11</td><td>Git author name</td><td>The commits use the placeholder name "hungle"</td><td><code>git commit --amend --reset-author</code> after setting <code>user.name</code></td></tr>
+    <tr><td>12</td><td>This status page is not committed</td><td>It was created after the last commit</td><td>Commit it, or keep it local</td></tr>
+  </table></div>
+
+  <footer>Generated from the session's verified results. Reproduce with <code>npm test</code> and <code>npm run -s report:parse -- --failures-only</code>.</footer>
+</main>
+</body>
+</html>

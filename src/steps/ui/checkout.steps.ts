@@ -5,7 +5,8 @@ import type { CustomWorld } from '../../support/world';
 import { parsePrice } from '../../utils/assertions';
 
 Given('a new customer is registered via the API', async function (this: CustomWorld) {
-  const customer = buildCustomer();
+  // Invoices are validated against the app's postcode lookup, so seed an address it agrees with.
+  const customer = buildCustomer(await this.api.address.lookup('NL', '3511 AA', '1'));
   const res = await this.api.users.register(customer);
   expect(res.status(), `precondition: registration failed: ${await res.text()}`).toBe(201);
   const { id } = (await res.json()) as { id: string };
@@ -71,12 +72,7 @@ When('I continue past the sign-in step', async function (this: CustomWorld) {
 });
 
 Then('the billing address should be prefilled from my profile', async function (this: CustomWorld) {
-  const { address } = this.state.customer!;
-  await this.pages.checkout.expectPrefilledAddress(
-    address.country,
-    address.postal_code,
-    address.house_number,
-  );
+  await this.pages.checkout.expectPrefilledAddress(this.state.customer!.address);
 });
 
 When('I continue to payment', async function (this: CustomWorld) {

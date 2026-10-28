@@ -1,5 +1,6 @@
 import { setWorldConstructor, World, type IWorldOptions } from '@cucumber/cucumber';
 import type { APIRequestContext, APIResponse, Browser, BrowserContext, Page } from '@playwright/test';
+import { AddressApi } from '../api/AddressApi';
 import { ApiClient } from '../api/ApiClient';
 import { AuthApi } from '../api/AuthApi';
 import { BrandsApi } from '../api/BrandsApi';
@@ -27,7 +28,7 @@ export class CustomWorld extends World {
   private _pages?: PageObjects;
 
   request!: APIRequestContext;
-  api!: { auth: AuthApi; brands: BrandsApi; products: ProductsApi; users: UsersApi };
+  api!: { auth: AuthApi; brands: BrandsApi; products: ProductsApi; users: UsersApi; address: AddressApi };
 
   state: ScenarioState = {};
   /** Brand ids created during the scenario; deleted in the After hook. */
@@ -47,6 +48,7 @@ export class CustomWorld extends World {
       brands: new BrandsApi(client),
       products: new ProductsApi(client),
       users: new UsersApi(client),
+      address: new AddressApi(client),
     };
   }
 

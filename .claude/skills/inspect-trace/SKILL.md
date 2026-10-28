@@ -27,4 +27,8 @@ Patterns worth recognising:
 - A request body contains data the test never typed. Shared demo data or an async prefill overwrote the input.
 - 5xx or connection errors on many calls point to the environment.
 
-Worked example from this repo: the checkout failed with `POST /invoices -> 422`. The request body in the trace showed an Austrian address with `billing_postal_code: null`, which the test never entered. The cause was the shared demo customer's profile prefill overwriting the form. The fix was to seed an isolated customer through the API.
+Worked example from this repo: the checkout failed with `POST /invoices -> 422`.
+- First body: an address the test never typed. The cause was the shared demo profile's prefill overwriting input, and the fix was to seed an isolated customer.
+- Second body: "city does not belong to the selected country". Invoices are validated against `/postcode-lookup`, so the fix was to seed the address that lookup returns.
+
+See `docs/ai-harness.md`, "Real catches".

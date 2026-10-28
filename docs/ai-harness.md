@@ -118,11 +118,16 @@ Path-scoped rules in `.claude/rules/` (locators, page objects, Gherkin, API test
   qa-judge (scenario-quality): 18/20 pass
 ```
 
-## A real catch during development
-The `inspect-trace` skill found a hidden race in the first version of the checkout scenario. The trace showed:
-- `POST /invoices -> 422`
-- a request body with an Austrian address and `billing_postal_code: null`, which the test had never typed
+## Real catches during development
+The checkout scenario was flaky at first. The `inspect-trace` skill (trace summary, then the request and response bodies) found two separate root causes. In both cases the fix followed the healing policy: no sleeps, no retries, no weakened assertions.
 
-The shared demo customer's profile prefill (and a postcode lookup) arrived after the test filled the form and overwrote it.
+1. **A shared profile overwrote the form.**
+   - Evidence: `POST /invoices -> 422`, and the request carried an Austrian address with `billing_postal_code: null`, which the test never typed.
+   - Cause: the billing step prefills from the demo customer's profile, which anyone on the public instance can edit. That prefill landed after the test had typed its values.
+   - Fix: register an isolated customer through the API for each run.
+2. **The seeded address disagreed with the app's own address service.**
+   - Evidence: `POST /invoices -> 422`, with `"The city does not belong to the selected country."` even for Utrecht, NL.
+   - Cause: the backend validates invoices against its `postcode-lookup` service, which deterministically maps NL / 3511 AA / 1 to a generated street and city. Earlier green runs had only passed because the lookup sometimes won a race and replaced the typed city.
+   - Fix: seed the customer with the address that `GET /postcode-lookup` returns, then assert that the UI prefills **exactly** that address.
 
-The fix followed the healing policy: no sleeps and no weakened assertions. Instead, the scenario now registers an isolated customer through the API with a known address, and asserts that the UI prefills it. That also turned the scenario into a real backend-to-UI sync check.
+The scenario is now a stronger backend-to-UI sync check, and it has passed repeatedly, including with `PARALLEL=3`.

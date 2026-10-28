@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
+import type { Address } from '../api/UsersApi';
 import { BasePage } from './BasePage';
 
 /** The checkout wizard: cart → sign in → billing address → payment. All steps live under /checkout. */
@@ -52,14 +53,16 @@ export class CheckoutPage extends BasePage {
   }
 
   /**
-   * The billing step is prefilled from the signed-in customer's profile, then a postcode lookup
-   * may rewrite street/city/state. Country, postcode and house number are the stable inputs.
+   * The billing step is prefilled asynchronously from the signed-in customer's profile, and a
+   * postcode lookup then rewrites street/city/state. Web-first assertions wait for both to settle.
    */
-  async expectPrefilledAddress(country: string, postalCode: string, houseNumber: string): Promise<void> {
-    await expect(this.country).toHaveValue(country);
-    await expect(this.postalCode).toHaveValue(postalCode);
-    await expect(this.houseNumber).toHaveValue(houseNumber);
-    for (const field of [this.street, this.city, this.state]) await expect(field).not.toHaveValue('');
+  async expectPrefilledAddress(address: Address): Promise<void> {
+    await expect(this.country).toHaveValue(address.country);
+    await expect(this.postalCode).toHaveValue(address.postal_code);
+    await expect(this.houseNumber).toHaveValue(address.house_number);
+    await expect(this.street).toHaveValue(address.street);
+    await expect(this.city).toHaveValue(address.city);
+    await expect(this.state).toHaveValue(address.state);
   }
 
   async payWith(method: string): Promise<void> {

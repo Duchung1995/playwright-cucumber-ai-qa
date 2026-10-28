@@ -110,7 +110,7 @@ Key design choices:
   - Hard waits are banned by ESLint (`no-restricted-syntax`) and by a Claude hook.
 - **Test data isolation on a shared public instance**:
   - Brands get unique slugs and customers unique emails.
-  - The checkout scenario registers its own customer through the API, because anyone can edit the shared demo account's profile, and that caused a real flake (see `docs/ai-harness.md`, "A real catch").
+  - The checkout scenario registers its own customer through the API, because anyone can edit the shared demo account's profile. The seeded address comes from the app's `/postcode-lookup`, because invoices are validated against it. Both were real flakes found with the harness's trace tooling (see `docs/ai-harness.md`, "Real catches").
 - **Schema validation**: zod schemas in `src/schemas`. `api-schema-check` diffs them against the live OpenAPI spec.
 
 ## 5. AI integration: agentic QA workflow as a Claude Code harness

@@ -30,7 +30,7 @@ Status reflects the current suite. Some requirements are intentionally left unco
 ### REQ-UI-01 Purchase flow
 - AC1 A signed-in customer can search, open a product, choose a quantity and add it to the cart. The cart badge updates.
 - AC2 The cart shows the right line items and a total of unit price × quantity.
-- AC3 Checkout prefills the billing address from the customer's profile.
+- AC3 Checkout prefills the billing address from the customer's profile, consistent with the postcode lookup.
 - AC4 Paying (Cash on Delivery) shows "Payment was successful", and confirming shows an invoice number.
 
 ### REQ-UI-02 Form validation

@@ -130,4 +130,9 @@ The checkout scenario was flaky at first. The `inspect-trace` skill (trace summa
    - Cause: the backend validates invoices against its `postcode-lookup` service, which deterministically maps NL / 3511 AA / 1 to a generated street and city. Earlier green runs had only passed because the lookup sometimes won a race and replaced the typed city.
    - Fix: seed the customer with the address that `GET /postcode-lookup` returns, then assert that the UI prefills **exactly** that address.
 
-The scenario is now a stronger backend-to-UI sync check, and it has passed repeatedly, including with `PARALLEL=3`.
+3. **The shared demo account got locked.**
+   - Evidence: once the failure context was added, the next run had four login-related failures, and each showed `POST /users/login -> 423 "Account locked, too many failed attempts"` along with the `curl` to reproduce it.
+   - Cause: the wrong-password scenarios, plus everyone else testing the public site, were failing logins against one shared demo account.
+   - Fix: every customer login now uses a throwaway customer registered for that scenario, and HTTP 423 is labelled `ENVIRONMENT`.
+
+The checkout scenario is now a stronger backend-to-UI sync check, and it has passed repeatedly, including with `PARALLEL=3`.

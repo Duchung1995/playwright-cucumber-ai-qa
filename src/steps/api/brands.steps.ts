@@ -1,6 +1,5 @@
 import { Given, Then, When } from '@cucumber/cucumber';
 import { expect } from '@playwright/test';
-import { credentialsFor } from '../../config/env';
 import { buildBrand } from '../../data/builders';
 import { brandSchema } from '../../schemas';
 import type { CustomWorld } from '../../support/world';
@@ -32,7 +31,7 @@ When('I create another brand with the same slug', async function (this: CustomWo
 });
 
 When('I create a brand with an empty payload', async function (this: CustomWorld) {
-  await this.remember(await this.request.post('/brands', { data: {}, failOnStatusCode: false }));
+  await this.remember(await this.api.client.post('/brands', { data: {} }));
 });
 
 When('I retrieve the created brand by id', async function (this: CustomWorld) {
@@ -65,6 +64,6 @@ Then('the retrieved brand should equal the created brand', function (this: Custo
 });
 
 async function tokenFor(world: CustomWorld, role: string): Promise<string> {
-  const { email, password } = credentialsFor(role);
+  const { email, password } = world.credentials(role);
   return world.api.auth.tokenFor(email, password);
 }

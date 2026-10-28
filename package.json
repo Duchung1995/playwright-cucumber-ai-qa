@@ -15,7 +15,8 @@
     "format": "prettier --write .",
     "steps:list": "tsx .claude/skills/write-gherkin/scripts/list-steps.ts",
     "report:parse": "tsx .claude/skills/parse-cucumber-report/scripts/parse-report.ts",
-    "trace:show": "playwright show-trace"
+    "trace:show": "playwright show-trace",
+    "report:failures": "tsx .claude/skills/parse-cucumber-report/scripts/parse-report.ts --markdown"
   },
   "devDependencies": {
     "@cucumber/cucumber": "^13.3.0",

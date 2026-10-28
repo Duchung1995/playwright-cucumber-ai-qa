@@ -1,22 +1,18 @@
 name: e2e
 
+# Runs against the real public Toolshop. That site rate-limits and can show GitHub runners a
+# Cloudflare bot check, so a red run is expected sometimes. The job summary labels each failure
+# with a likely cause, so environment blocks are not mistaken for test or product bugs.
 on:
   push:
     branches: [main]
   pull_request:
   workflow_dispatch:
-    inputs:
-      profile:
-        description: 'Cucumber profile (default | api | ui | smoke)'
-        default: default
 
 jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    env:
-      HEADLESS: 'true'
-      PARALLEL: '2'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -29,13 +25,21 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - name: Run tests
-        run: npx cucumber-js --profile ${{ github.event.inputs.profile || 'default' }}
-      - name: Summarise
+        run: npm test
+      - name: Failure report
         if: always()
-        run: |
-          { echo '### Failed scenarios'; echo '```json'; npm run -s report:parse -- --failures-only; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
+        run: npm run -s report:failures >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failure-screenshots
+          path: reports/screenshots/
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Upload full report (HTML, JSON, traces)
         if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: reports
           path: reports/

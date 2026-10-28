@@ -26,6 +26,7 @@ Feature: Brand update and delete lifecycle API
     Then the response status should be 404
 
   Scenario Outline: Deleting a brand is restricted (<case>)
+    Given a new customer is registered via the API
     When I delete the brand <actor>
     Then the response status should be <status>
     And the response body field "message" should equal "<message>"
@@ -35,4 +36,4 @@ Feature: Brand update and delete lifecycle API
     Examples:
       | case                | actor                       | status | message      |
       | anonymous caller    | without authentication      | 401    | Unauthorized |
-      | customer role       | as the "customer" user      | 403    | Forbidden    |
+      | customer role       | as the "new customer" user  | 403    | Forbidden    |

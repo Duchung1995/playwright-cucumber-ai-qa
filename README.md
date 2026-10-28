@@ -47,12 +47,34 @@ Environment overrides:
 - `PARALLEL=4` runs in parallel workers.
 - `RETRY=1` retries failed scenarios.
 
-**Reports** go to `reports/`, which is git-ignored:
-- `cucumber.html`: human report, with screenshots embedded on failure
-- `cucumber.json`: machine-readable
-- `screenshots/*.png` and `traces/*.zip`: captured for failed UI scenarios. Open a trace with `npx playwright show-trace <zip>`.
+### When a scenario fails
+The tests run against the **real public site**, which rate-limits and sometimes shows automated browsers a Cloudflare "verify you are human" page. So every failure says what most likely went wrong, both locally and in CI:
 
-**CI**: `.github/workflows/ci.yml` runs type-check, lint and the suite on every push and PR. It uploads `reports/` as an artifact and writes the failure summary to the job summary.
+- **In the run output:** a short block with the location, the likely cause, the screenshot path and the trace command:
+  ```
+  ✖ FAILED Signed-in customer buys a searched product with cash on delivery
+    at          features/ui/checkout.feature:11
+    likely:     ENVIRONMENT: blocked by the Cloudflare bot check on the public site (not a test or product failure)
+    screenshot: reports/screenshots/signed-in-customer-…png
+    trace:      npx playwright show-trace reports/traces/signed-in-customer-….zip
+  ```
+- **In the report:** a "Failure context" attachment on each failed scenario containing:
+  - the likely cause, URL and page title
+  - every API call the test made, as a copy-pasteable `curl` command with its response
+  - browser requests that failed, and console errors
+
+  Likely causes are `ENVIRONMENT` (bot check, HTTP 429, unreachable, 5xx) or `TEST or PRODUCT` (an assertion failed on a reachable site).
+- **As Markdown:** `npm run -s report:failures` prints a summary table plus details for each failure.
+
+The artifacts in `reports/` (git-ignored):
+- `cucumber.html`: human report, with the screenshot and failure context embedded
+- `cucumber.json`: machine-readable
+- `screenshots/*.png` and `traces/*.zip`: saved for failed UI scenarios
+
+**CI** (`.github/workflows/ci.yml`) runs type-check, lint and the full suite against the public site on every push and PR. CI is **not expected to be always green**: GitHub runners are often bot-checked. Each run publishes:
+- the Markdown failure report as the job summary
+- a `failure-screenshots` artifact
+- the full `reports` artifact (HTML, JSON, traces)
 
 ## 3. Test cases
 
@@ -134,7 +156,8 @@ claude
 Design, diagram, real run transcripts and the bugs the harness found: **[docs/ai-harness.md](docs/ai-harness.md)**.
 
 ## 6. Notes and limitations
-- The target is a **shared public instance**. Other users change data concurrently, and it can be slow or briefly unavailable. Tests create their own data and clean it up. Catalog assertions compare the UI with the live API rather than with hard-coded product lists, so they stay valid when the catalog changes.
+- The target is a **shared public instance**. Other users change data concurrently, it rate-limits, it can be slow or briefly unavailable, and it may show automated browsers a Cloudflare bot check. Failures from these causes are labelled `ENVIRONMENT`. The tests never try to bypass the bot check. Tests create their own data and clean it up. Catalog assertions compare the UI with the live API rather than with hard-coded product lists, so they stay valid when the catalog changes.
+- The site **locks an account after repeated failed logins** (HTTP 423), and anyone testing the public instance can lock the shared demo customer. Every scenario that logs in as a customer therefore registers its own throwaway customer, which is deleted afterwards. Only the admin account is shared, and the suite never sends it a wrong password.
 - The storefront always sends a default price range (`between=price,1,100`). `ProductsApi` mirrors it so UI and API are compared like for like.
 - The UI's catalog calls use the HTTP `QUERY` method. The tests' independent API oracle uses the equivalent `GET` with query parameters.
 - `.claude/settings.local.json` (personal settings) is git-ignored. The shared `.claude/settings.json` is committed.

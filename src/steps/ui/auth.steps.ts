@@ -1,6 +1,5 @@
 import { Given, Then, When } from '@cucumber/cucumber';
 import { expect } from '@playwright/test';
-import { credentialsFor } from '../../config/env';
 import type { CustomWorld } from '../../support/world';
 
 Given('I am on the login page', async function (this: CustomWorld) {
@@ -8,7 +7,7 @@ Given('I am on the login page', async function (this: CustomWorld) {
 });
 
 Given('I am signed in as the {string} user', async function (this: CustomWorld, role: string) {
-  const { email, password } = credentialsFor(role);
+  const { email, password } = this.credentials(role);
   await this.pages.login.open();
   await this.pages.login.login(email, password);
   await expect(this.page).toHaveURL(/\/account$/);
@@ -18,7 +17,7 @@ Given('I am signed in as the {string} user', async function (this: CustomWorld, 
 When(
   'I log in with the {string} email and password {string}',
   async function (this: CustomWorld, role: string, password: string) {
-    await this.pages.login.login(credentialsFor(role).email, password);
+    await this.pages.login.login(this.credentials(role).email, password);
   },
 );
 

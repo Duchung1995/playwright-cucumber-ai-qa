@@ -1,14 +1,16 @@
 import { setWorldConstructor, World, type IWorldOptions } from '@cucumber/cucumber';
 import type { APIRequestContext, APIResponse, Browser, BrowserContext, Page } from '@playwright/test';
 import { AddressApi } from '../api/AddressApi';
-import { ApiClient } from '../api/ApiClient';
+import { ApiClient, type RecordedCall } from '../api/ApiClient';
 import { AuthApi } from '../api/AuthApi';
 import { BrandsApi } from '../api/BrandsApi';
 import { ProductsApi } from '../api/ProductsApi';
 import { UsersApi, type NewUser } from '../api/UsersApi';
 import type { BrandPayload } from '../api/BrandsApi';
 import type { Brand } from '../schemas';
+import { credentialsFor } from '../config/env';
 import { PageObjects } from '../pages';
+import type { BrowserLog } from './failureContext';
 
 /** Data shared between the steps of one scenario. Reset for every scenario. */
 export type ScenarioState = {
@@ -28,7 +30,22 @@ export class CustomWorld extends World {
   private _pages?: PageObjects;
 
   request!: APIRequestContext;
-  api!: { auth: AuthApi; brands: BrandsApi; products: ProductsApi; users: UsersApi; address: AddressApi };
+  api!: {
+    /** Raw access for deliberately malformed requests; still recorded for failure reports. */
+    client: ApiClient;
+    auth: AuthApi;
+    brands: BrandsApi;
+    products: ProductsApi;
+    users: UsersApi;
+    address: AddressApi;
+  };
+  /** Filled by the @ui Before hook; shown in the failure context. */
+  readonly browserLog: BrowserLog = { failedRequests: [], consoleErrors: [] };
+  /** Set by the After hooks when the scenario failed. */
+  failureHint?: string;
+  readonly failureArtifacts: string[] = [];
+  /** Number of API calls the scenario itself made; later calls are the After hook's cleanup. */
+  callsBeforeCleanup?: number;
 
   state: ScenarioState = {};
   /** Brand ids created during the scenario; deleted in the After hook. */
@@ -44,6 +61,7 @@ export class CustomWorld extends World {
     this.request = request;
     const client = new ApiClient(request);
     this.api = {
+      client,
       auth: new AuthApi(client),
       brands: new BrandsApi(client),
       products: new ProductsApi(client),
@@ -73,6 +91,23 @@ export class CustomWorld extends World {
     const text = await response.text();
     this.state.responseBody = text ? safeJson(text) : undefined;
     return response;
+  }
+
+  /**
+   * Credentials for a role. "new customer" is the throwaway account registered in this scenario; use it for
+   * anything that logs in as a customer. The shared demo customer is locked by the site after repeated failed
+   * logins from anyone, so scenarios must not depend on it.
+   */
+  credentials(role: string): { email: string; password: string } {
+    if (role === 'new customer') {
+      if (!this.state.customer) throw new Error('Add "Given a new customer is registered via the API" first');
+      return { email: this.state.customer.email, password: this.state.customer.password };
+    }
+    return credentialsFor(role);
+  }
+
+  get apiCalls(): RecordedCall[] {
+    return this.api?.client.calls ?? [];
   }
 
   get lastResponse(): APIResponse {

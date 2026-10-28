@@ -3,7 +3,8 @@
  * totals, per-scenario status/duration, and for failures the failing step, trimmed error
  * and artifact paths (screenshot, trace, URL).
  *
- * Usage: npx tsx .claude/skills/parse-cucumber-report/scripts/parse-report.ts [report.json] [--failures-only]
+ * Usage: npx tsx .claude/skills/parse-cucumber-report/scripts/parse-report.ts [report.json] [--failures-only] [--markdown]
+ *   --markdown  human-readable failure report (used for the CI job summary and `npm run report:failures`)
  */
 import fs from 'node:fs';
 
@@ -23,6 +24,7 @@ type Feature = { uri: string; name: string; elements: Scenario[] };
 const args = process.argv.slice(2);
 const reportPath = args.find((a) => !a.startsWith('--')) ?? 'reports/cucumber.json';
 const failuresOnly = args.includes('--failures-only');
+const markdown = args.includes('--markdown');
 
 if (!fs.existsSync(reportPath)) {
   console.error(`No report at ${reportPath}. Run the suite first (npm test).`);
@@ -66,6 +68,10 @@ const scenarios = features.flatMap((f) =>
           screenshot: artifact('Screenshot:'),
           trace: artifact('Trace:'),
           urlAtFailure: artifact('URL at failure:'),
+          likelyCause: texts.find((t) => t.startsWith('Failure context'))?.match(/Likely cause: (.*)/)?.[1],
+          failureContext: texts
+            .find((t) => t.startsWith('Failure context'))
+            ?.replace(/^Failure context\n/, ''),
         }),
       };
     }),
@@ -76,18 +82,65 @@ const totals = scenarios.reduce<Record<string, number>>(
   { total: scenarios.length },
 );
 
-console.log(
-  JSON.stringify(
-    {
-      report: reportPath,
-      generatedAt: fs.statSync(reportPath).mtime.toISOString(),
-      totals,
-      scenarios: failuresOnly ? scenarios.filter((s) => s.status !== 'passed') : scenarios,
-    },
-    null,
-    2,
-  ),
-);
+const generatedAt = fs.statSync(reportPath).mtime.toISOString();
+const listed = failuresOnly || markdown ? scenarios.filter((s) => s.status !== 'passed') : scenarios;
+
+if (markdown) {
+  console.log(toMarkdown());
+} else {
+  console.log(JSON.stringify({ report: reportPath, generatedAt, totals, scenarios: listed }, null, 2));
+}
+
+function toMarkdown(): string {
+  const counts = Object.entries(totals)
+    .filter(([k]) => k !== 'total')
+    .map(([k, v]) => `${v} ${k}`)
+    .join(', ');
+  const out = [`## Test results: ${counts} (of ${totals.total})`, '', `Report generated ${generatedAt}.`];
+  if (listed.length === 0) return [...out, '', 'All scenarios passed.'].join('\n');
+
+  const environment = listed.filter((s) => s.likelyCause?.startsWith('ENVIRONMENT')).length;
+  if (environment > 0) {
+    out.push(
+      '',
+      `> ${environment} of ${listed.length} failures look environmental (public site blocked, rate limited or unreachable), not test or product bugs.`,
+    );
+  }
+  out.push('', '| Scenario | Failed step | Likely cause |', '|---|---|---|');
+  for (const s of listed) {
+    out.push(
+      `| ${cell(s.scenario)}<br>\`${s.location}\` | ${cell(s.failedStep ?? s.status)} | ${cell(s.likelyCause ?? '-')} |`,
+    );
+  }
+  for (const s of listed) {
+    out.push(
+      '',
+      `### ${s.scenario}`,
+      '',
+      `- Location: \`${s.location}\``,
+      `- Failed step: ${s.failedStep ?? s.status}`,
+    );
+    if (s.stepDefinition) out.push(`- Step definition: \`${s.stepDefinition}\``);
+    if (s.screenshot) out.push(`- Screenshot: \`${s.screenshot}\``);
+    if (s.trace) out.push(`- Trace: \`npx playwright show-trace ${s.trace}\``);
+    if (s.error) out.push('', '```', s.error, '```');
+    if (s.failureContext)
+      out.push(
+        '',
+        '<details><summary>Failure context</summary>',
+        '',
+        '```',
+        s.failureContext,
+        '```',
+        '</details>',
+      );
+  }
+  return out.join('\n');
+}
+
+function cell(text: string): string {
+  return text.replace(/\|/g, '\\|').replace(/\n/g, ' ');
+}
 
 function decode(data: string): string {
   // Cucumber stores text attachments either raw or base64-encoded depending on version.

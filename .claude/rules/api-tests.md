@@ -12,3 +12,4 @@ paths:
 - Data created on the shared public instance must be unique (`src/data/builders.ts`) and registered for cleanup (`this.createdBrandIds`, `this.createdUserIds`). The After hook deletes it.
 - Assert both the status code and the error body for negative cases.
 - Seeded addresses must come from `this.api.address.lookup(...)`: the backend rejects invoices whose city does not match its postcode lookup.
+- Never log in as the shared demo customer. Use `Given a new customer is registered via the API` and the "new customer" role, because failed logins lock accounts (HTTP 423).

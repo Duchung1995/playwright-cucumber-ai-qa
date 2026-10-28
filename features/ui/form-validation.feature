@@ -36,7 +36,8 @@ Feature: Registration and login form validation
       | phone    | 06-CALL-ME   | Only numbers are allowed.                  |
 
   Scenario: Login with a wrong password shows an error banner
-    Given I am on the login page
-    When I log in with the "customer" email and password "wrong-password-1"
+    Given a new customer is registered via the API
+    And I am on the login page
+    When I log in with the "new customer" email and password "wrong-password-1"
     Then I should see the login error "Invalid email or password"
     And I should still be on the login page

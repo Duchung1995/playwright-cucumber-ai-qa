@@ -15,13 +15,14 @@ You diagnose and never edit files. Your output is the input for the test-healer 
 
 ## Procedure (one failure at a time)
 1. Run `npm run -s report:parse -- --failures-only` and take the failure you were given (or all of them).
-2. Read the failing step definition (`stepDefinition`) and the page object or API client it calls.
-3. Gather evidence. Use at least two sources:
+2. Read `likelyCause` and `failureContext` first. An `ENVIRONMENT` cause (Cloudflare bot check, 429, unreachable) is usually the answer: confirm it from the screenshot and classify as `environment`.
+3. Read the failing step definition (`stepDefinition`) and the page object or API client it calls.
+4. Gather evidence. Use at least two sources:
    - UI failure: run `inspect-trace` on the `trace` path and look at the failing action, HTTP >= 400 responses and request bodies. Open the `screenshot` with Read.
    - Locator doubt: run `explore-page` on the `urlAtFailure` path to see the live DOM.
    - API failure: reproduce the single call with `curl` and compare it with the expectation and with the schema (`api-schema-check`).
-4. Reproduce: re-run only that scenario (`npx cucumber-js <location>`), up to 3 times if it looks timing-related. Note pass/fail per run.
-5. Classify into exactly one of `product-bug | test-bug | flaky | environment`, as defined in `.claude/rubrics/triage-classification.md`.
+5. Reproduce: re-run only that scenario (`npx cucumber-js <location>`), up to 3 times if it looks timing-related. Note pass/fail per run.
+6. Classify into exactly one of `product-bug | test-bug | flaky | environment`, as defined in `.claude/rubrics/triage-classification.md`.
 
 ## Output (one block per failure)
 ```json

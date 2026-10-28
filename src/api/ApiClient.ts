@@ -6,36 +6,62 @@ export type RequestOptions = {
   params?: Record<string, string | number | boolean>;
 };
 
+/** One HTTP exchange, kept so a failing scenario can show exactly what was sent and received. */
+export type RecordedCall = {
+  method: string;
+  url: string;
+  token?: string;
+  requestBody?: unknown;
+  status: number;
+  responseBody: string;
+};
+
 /** Thin wrapper over Playwright's APIRequestContext that handles bearer auth and JSON bodies. */
 export class ApiClient {
+  readonly calls: RecordedCall[] = [];
+
   constructor(private readonly request: APIRequestContext) {}
 
   get(path: string, opts: RequestOptions = {}): Promise<APIResponse> {
-    return this.request.get(path, this.build(opts));
+    return this.send('GET', path, opts);
   }
 
   post(path: string, opts: RequestOptions = {}): Promise<APIResponse> {
-    return this.request.post(path, this.build(opts));
+    return this.send('POST', path, opts);
   }
 
   put(path: string, opts: RequestOptions = {}): Promise<APIResponse> {
-    return this.request.put(path, this.build(opts));
+    return this.send('PUT', path, opts);
   }
 
   patch(path: string, opts: RequestOptions = {}): Promise<APIResponse> {
-    return this.request.patch(path, this.build(opts));
+    return this.send('PATCH', path, opts);
   }
 
   delete(path: string, opts: RequestOptions = {}): Promise<APIResponse> {
-    return this.request.delete(path, this.build(opts));
+    return this.send('DELETE', path, opts);
   }
 
-  private build({ token, data, params }: RequestOptions) {
-    return {
+  private async send(
+    method: string,
+    path: string,
+    { token, data, params }: RequestOptions,
+  ): Promise<APIResponse> {
+    const response = await this.request.fetch(path, {
+      method,
       headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       data,
       params,
       failOnStatusCode: false,
-    };
+    });
+    this.calls.push({
+      method,
+      url: response.url(),
+      token,
+      requestBody: data,
+      status: response.status(),
+      responseBody: await response.text(),
+    });
+    return response;
   }
 }

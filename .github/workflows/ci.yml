@@ -18,8 +18,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
+      # No lockfile is committed, so install from package.json ranges.
+      - run: npm install
       - run: npx playwright install --with-deps chromium
       - run: cp .env.example .env
       - run: npm run typecheck

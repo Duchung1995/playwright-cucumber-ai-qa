@@ -1,11 +1,23 @@
+# Dependencies and generated output
 node_modules/
+package-lock.json
 reports/
 test-results/
+playwright-report/
+*.log
+
+# Local environment and secrets
 .env
+
+# OS / editor
 .DS_Store
+.vscode/
+.idea/
+
 # Personal Claude Code settings stay local; the shared harness in .claude/ is committed
 .claude/settings.local.json
 .claude/.headroom*
 
-# Assignment brief (not part of the deliverable)
+# Local-only documents (assignment brief, personal status notes)
 *.pdf
+PROJECT_STATUS.html
